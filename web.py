@@ -10,9 +10,10 @@ import tornado.options
 import tornado.web
 import tornado.gen
 from tornado import httpclient
+import os
 
 from tornado.options import define, options
-define("port", default=5002, help="run on the given port", type=int)
+define("port", default=int(os.getenv('PORT', 5000)), help="run on the given port", type=int)
 
 class Child:
     def __init__(self, rq, num, children=[]):
@@ -76,7 +77,7 @@ class MainHandler(tornado.web.RequestHandler):
 
 if __name__ == "__main__":
     tornado.options.parse_command_line()
-    app = tornado.web.Application(handlers=[(r"/", MainHandler)], debug=True)
+    app = tornado.web.Application(handlers=[(r"/", MainHandler)], debug=os.getenv('DEBUG'))
     # http_server = tornado.httpserver.HTTPServer(app)
     app.listen(options.port)
     try: 
