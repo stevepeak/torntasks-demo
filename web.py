@@ -23,12 +23,12 @@ class Child:
 
     @tornado.gen.coroutine
     def run(self):
-        print "+ T", self.rq, "C", self.num
+        # print "+ T", self.rq, "C", self.num
         if isinstance(self, AsyncChild):
             yield self()
         else:
             self()
-        print "- T", self.rq, "C", self.num
+        # print "- T", self.rq, "C", self.num
         if self.children:
             yield map(lambda c: tornado.gen.Task(c.run), self.children)
 
@@ -48,17 +48,27 @@ class MainHandler(tornado.web.RequestHandler):
     def task_run(self):
         logging.info('Task Starts')
         rq = self.get_argument('rq', '?')
-        self.children = [AsyncChild(rq, 1, [AsyncChild(rq, 2),
-                                        AsyncChild(rq, 3, [SyncChild(rq, 4),
-                                                       AsyncChild(rq, 5),
-                                                       SyncChild(rq, 6)]),
-                                        SyncChild(rq, 7)]),
-                         SyncChild(rq, 8, [AsyncChild(rq, 9, [AsyncChild(rq, 10),
-                                                      AsyncChild(rq, 11, [SyncChild(rq, 12),
-                                                                     AsyncChild(rq, 13),
-                                                                     SyncChild(rq, 14)]),
-                                                      SyncChild(rq, 15)]),
-                                       SyncChild(rq, 16)])]
+        if self.get_argument('size', None) == 'large':
+            self.children = [AsyncChild(rq, 1, [AsyncChild(rq, 2),
+                                            AsyncChild(rq, 3, [SyncChild(rq, 4),
+                                                           AsyncChild(rq, 5),
+                                                           SyncChild(rq, 6)]),
+                                            SyncChild(rq, 7)]),
+                             SyncChild(rq, 8, [AsyncChild(rq, 9, [AsyncChild(rq, 10),
+                                                          AsyncChild(rq, 11, [SyncChild(rq, 12),
+                                                                         AsyncChild(rq, 13),
+                                                                         SyncChild(rq, 14)]),
+                                                          SyncChild(rq, 15)]),
+                                           SyncChild(rq, 16)])]
+        elif self.get_argument('size', None) == 'medium':
+            self.children = [AsyncChild(rq, 1, [AsyncChild(rq, 2),
+                                                AsyncChild(rq, 3, [SyncChild(rq, 4),
+                                                                   AsyncChild(rq, 5),
+                                                                   SyncChild(rq, 6)]),
+                                                SyncChild(rq, 7)])]
+        else:
+            self.children = [SyncChild(rq, 8, [AsyncChild(rq, 9, [SyncChild(rq, 10)])])]
+
 
         yield map(lambda c: tornado.gen.Task(c.run), self.children)
         logging.info('Task Ends')
@@ -66,14 +76,12 @@ class MainHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def get(self):
-        logging.info('Request Begin ' + self.get_argument('rq', ''))
-        self.write('Please wait as I work magic!')
-        self.flush()
+        # logging.info('Request Begin ' + self.get_argument('rq', ''))
+        # self.write('Please wait as I work magic!')
+        # self.flush()
         yield tornado.gen.Task(self.task_run)
-        logging.info('Request finished ' + self.get_argument('rq', ''))
-        self.write("<br><br><br><strong>Fin.</strong>")
-        self.finish()
-
+        # logging.info('Request finished ' + self.get_argument('rq', ''))
+        self.render("./example.html")
 
 if __name__ == "__main__":
     tornado.options.parse_command_line()
